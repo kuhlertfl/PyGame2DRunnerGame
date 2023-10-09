@@ -1,6 +1,7 @@
 import pygame 
 from sys import exit
 import time
+from random import randint
 
 def display_score():
     current_time = pygame.time.get_ticks() - start_time
@@ -12,6 +13,27 @@ def display_end_score(score_end):
     score_surface = pixel_font.render(f"Score: {score_end //1000}" , False , (64,64,64))
     score_rect = score_surface.get_rect(center = (600,50))
     screen.blit( score_surface , score_rect)
+def obstacle_movement(obstacle_list):
+    if obstacle_list:
+    
+        for obstacle_rect in obstacle_list:
+            obstacle_rect.x -= 5
+            if obstacle_rect.y <= 100:
+                screen.blit(fly_surface , obstacle_rect)
+            else:
+                screen.blit(snail_surface , obstacle_rect)
+            
+        obstacle_list = [obstacle for obstacle in obstacle_list if obstacle.x > -50]
+        return obstacle_list
+    else:
+        return []
+def collisions(player , obstacles):
+    if obstacles: 
+        for obstacle in obstacles: 
+            if player.colliderect(obstacle):
+                
+                return False
+    return True
 pygame.init()
 screen = pygame.display.set_mode((800,400))
 #Window title
@@ -46,10 +68,19 @@ score_message_rect = score_message.get_rect(center = (650,50))
 #import snake
 #convert the pictures with .convert to let pygame work easier with it
 #convert alpha ignores the black and white background in a picture u want to seperate
+#Obstacles
+# Snail
 snail_surface = pygame.image.load("graphics/snail/snail1.png").convert_alpha()
 snail_x_pos = 600
 snail_rect = snail_surface.get_rect(midbottom = (snail_x_pos, on_ground_y))
 snail_speed = 0 
+
+# Fly 
+fly_surface = pygame.image.load("graphics/fly/Fly1.png").convert_alpha()
+fly_rect = fly_surface.get_rect(center = (400,50))
+fly_speed =  0
+obstacle_rect_list = []
+
 
 #import player 
 player_surf = pygame.image.load("graphics/player/player_walk_1.png").convert_alpha()
@@ -119,7 +150,10 @@ while True:
                 game_active = True
                 start_time = pygame.time.get_ticks()
         if event.type == obstacle_timer and game_active:
-            print("Test")
+            if randint(0,2):
+                obstacle_rect_list.append(snail_surface.get_rect(midbottom = (randint(900,1100), on_ground_y)))
+            else:
+                obstacle_rect_list.append(fly_surface.get_rect(midbottom = (randint(1500,1600), 100)))
     #blit block image transfer --> put one surfave on another surface
     #surfaces are chronology orderer so now ground can be over sky
     #use the rectangle for pos to controll more precise where the object is
@@ -173,14 +207,26 @@ while True:
         if player_rect.bottom < 300:
             screen.blit( player_jumping_surf , player_rect)
         
-        #Snail
-        #snail_speed -= 0.01
-        snail_rect.x -= 6 - snail_speed
-        #reset snail 
-        if snail_rect.right < 0 : 
-            snail_rect.left = 800
-        #print(player_rect.left)
+           
+        #Obstacle Movement
+        obstacle_rect_list = obstacle_movement(obstacle_rect_list)
         
+        
+        #Collision
+        game_active = collisions(player_rect , obstacle_rect_list)
+        
+        
+        #Snail 
+        #snail_speed -= 0.01
+        # snail_rect.x -= 6 - snail_speed
+        # #reset snail 
+        # if snail_rect.right < 0 : 
+        #     snail_rect.left = 800
+        #print(player_rect.left)
+
+
+        #Snail movement with timer 
+
         #collision player -- snail
         if player_rect.colliderect(snail_rect):
             print("Game Over")
@@ -194,16 +240,19 @@ while True:
         #     pass
         
         
+            
     else:
         screen.fill("#a0e0fc")
         screen.blit(scaled_player_surf , scaled_player_rect)
         screen.blit(game_over_surface , game_over_rect)
         screen.blit(play_again_surface , play_again_rect)
+        obstacle_rect_list.clear()
+        player_rect.midbottom = (80,300)
+        player_gravity = 0
         score_message = pixel_font.render(f"Your Score: {score //1000}" , False , (64,64,64))
         score_message_rect = score_message.get_rect(center = (650,50))
         screen.blit(score_message , score_message_rect)
         
-
         
 
 
